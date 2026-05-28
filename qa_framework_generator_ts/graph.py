@@ -48,16 +48,29 @@ def smoke_validate_node(state: GeneratorState) -> dict:
 def final_report_node(state: GeneratorState) -> dict:
     from qa_framework_generator_ts.file_writer import write_files
     failures = [r for r in state.validation_results if not r.passed]
+    # If repair exhausted attempts after clearing validation_results, surface
+    # the last seen failures so the status and report tell the truth.
+    repair_exhausted = (
+        not failures
+        and state.last_failures
+        and state.repair_attempts >= state.max_repair_attempts
+    )
+    if repair_exhausted:
+        failures = state.last_failures
     status = "failed" if failures else "done"
-    report = _build_report(state)
+    report = _build_report(state, override_failures=failures if repair_exhausted else None)
     file = GeneratedFile(path="GENERATION_REPORT.md", content=report, kind="markdown")
     write_files([file], state.output_dir or "./out", force=True, cleanup=False)
     return {"status": status}
 
 
-def _build_report(state: GeneratorState) -> str:
-    passed = [r for r in state.validation_results if r.passed]
-    failed = [r for r in state.validation_results if not r.passed]
+def _build_report(state: GeneratorState, override_failures: list[ValidationResult] | None = None) -> str:
+    if override_failures is not None:
+        results_to_display = list(state.validation_results) + override_failures
+    else:
+        results_to_display = state.validation_results
+    passed = [r for r in results_to_display if r.passed]
+    failed = [r for r in results_to_display if not r.passed]
     lines = [
         f"# Generation Report — {state.project_name}",
         "",
@@ -73,12 +86,21 @@ def _build_report(state: GeneratorState) -> str:
     for f in state.generated_files:
         lines.append(f"- `{f.path}`")
     lines += ["", f"## Validation — {len(passed)} passed / {len(failed)} failed", ""]
-    for r in state.validation_results:
+    for r in results_to_display:
         icon = "✅" if r.passed else "❌"
         lines.append(f"- {icon} `{r.name}`")
         if not r.passed and r.output:
             first_line = r.output.split("\n", 1)[0][:200]
             lines.append(f"  - {first_line}")
+    if override_failures is not None:
+        lines += [
+            "",
+            "## Note",
+            "",
+            "Repair attempts exhausted. The validation results below are from the last "
+            "non-empty failure set before repair cleared them. The CLI exit reflects this "
+            "as `failed`, not `done`.",
+        ]
     return "\n".join(lines) + "\n"
 
 
@@ -193,6 +215,7 @@ def repair_node(state: GeneratorState) -> dict:
         "repair_attempts": state.repair_attempts + 1,
         "status": "repairing",
         "validation_results": [],
+        "last_failures": failures if failures else state.last_failures,
     }
 
 

@@ -60,3 +60,65 @@ def test_route_after_repair_loops_under_cap():
 def test_build_graph_compiles_without_error():
     g = build_graph()
     assert g is not None
+
+
+def test_final_report_failed_after_repair_exhaustion():
+    """Repair exhausted, validation_results cleared, last_failures has truth → status failed."""
+    from qa_framework_generator_ts.graph import final_report_node
+    from qa_framework_generator_ts.state import GeneratorState, ValidationResult
+    state = GeneratorState(
+        config_path="examples/minimal.yaml",
+        output_dir="/tmp/test-repair-exhaustion",
+        project_name="x",
+        target_package="x",
+        repair_attempts=3,
+        max_repair_attempts=3,
+        validation_results=[],  # cleared by the last repair pass
+        last_failures=[ValidationResult(name="tsc", passed=False, output="error TS2304")],
+    )
+    out = final_report_node(state)
+    assert out["status"] == "failed"
+
+
+def test_final_report_done_when_no_failures_and_no_repair_exhaustion():
+    """Happy path: no failures, no repair history → status done."""
+    from qa_framework_generator_ts.graph import final_report_node
+    from qa_framework_generator_ts.state import GeneratorState, ValidationResult
+    state = GeneratorState(
+        config_path="examples/minimal.yaml",
+        output_dir="/tmp/test-happy",
+        project_name="x",
+        target_package="x",
+        repair_attempts=0,
+        max_repair_attempts=3,
+        validation_results=[ValidationResult(name="smoke", passed=True)],
+    )
+    out = final_report_node(state)
+    assert out["status"] == "done"
+
+
+def test_repair_node_saves_failures_to_last_failures():
+    """repair_node must populate last_failures with the cleared failures."""
+    from unittest.mock import patch
+    from qa_framework_generator_ts.graph import repair_node
+    from qa_framework_generator_ts.state import GeneratorState, GeneratedFile, ValidationResult
+
+    state = GeneratorState(
+        config_path="examples/minimal.yaml",
+        output_dir="/tmp/test-repair-saves",
+        generated_files=[GeneratedFile(path="src/x.ts", content="x", kind="typescript")],
+        validation_results=[
+            ValidationResult(name="tsc", passed=False, output="error TS2304"),
+            ValidationResult(name="eslint", passed=True, output="ok"),
+        ],
+        repair_attempts=0,
+        max_repair_attempts=3,
+    )
+    with patch("qa_framework_generator_ts.repair.repair_files") as repair_files, \
+         patch("qa_framework_generator_ts.file_writer.write_files"):
+        repair_files.return_value = state.generated_files
+        out = repair_node(state)
+    # Only failing results land in last_failures
+    assert len(out["last_failures"]) == 1
+    assert out["last_failures"][0].name == "tsc"
+    assert out["validation_results"] == []  # cleared as before

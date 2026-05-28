@@ -31,6 +31,7 @@ class GeneratorState(BaseModel):
 
     generated_files: list[GeneratedFile] = Field(default_factory=list)
     validation_results: list[ValidationResult] = Field(default_factory=list)
+    last_failures: list[ValidationResult] = Field(default_factory=list)
 
     repair_attempts: int = 0
     max_repair_attempts: int = 3
