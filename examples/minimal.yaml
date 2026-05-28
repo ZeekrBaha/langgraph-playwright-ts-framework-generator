@@ -1,0 +1,25 @@
+project_name: minimal-demo
+package_name: minimal-demo
+output_dir: ./minimal-output
+target_app:
+  name: MinimalApp
+  base_url: http://localhost:5173
+  start_command: npm run dev
+  start_cwd: ../minimal-app
+  health_path: /
+browsers:
+  - chromium
+pages:
+  - name: HomePage
+    url: /
+    elements:
+      - name: heading
+        locator: { strategy: role, role: heading, name: "Welcome" }
+    actions: []
+flows:
+  - name: HomeFlow
+    tags: [smoke]
+    steps:
+      - { page: HomePage, action: goto }
+    assertions:
+      - { "on": HomePage.heading, expect: toBeVisible }
