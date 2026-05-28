@@ -1,0 +1,20 @@
+import { test as base, expect } from '@playwright/test';
+{% for p in pages %}
+import { {{ p.name }} } from './pages/{{ p.name }}';
+{% endfor %}
+
+type Fixtures = {
+{% for p in pages %}
+  {{ p.name[0] | lower }}{{ p.name[1:] }}: {{ p.name }};
+{% endfor %}
+};
+
+export const test = base.extend<Fixtures>({
+{% for p in pages %}
+  {{ p.name[0] | lower }}{{ p.name[1:] }}: async ({ page }, use) => {
+    await use(new {{ p.name }}(page));
+  },
+{% endfor %}
+});
+
+export { expect };

@@ -1,0 +1,19 @@
+import { test, expect } from '../src/fixtures';
+
+{% if tags %}
+test.describe.configure({ tag: [{% for t in tags %}'@{{ t }}'{% if not loop.last %}, {% endif %}{% endfor %}] });
+{% endif %}
+
+test.describe('{{ describe }}', () => {
+  test('{{ test_name }}', async ({ {% for fx in used_fixtures %}{{ fx }}{% if not loop.last %}, {% endif %}{% endfor %} }) => {
+{% for step in steps %}
+    await test.step('{{ step.label }}', async () => {
+      {{ step.body }}
+    });
+{% endfor %}
+
+{% for a in assertions %}
+    await expect({{ a.subject }}).{{ a.expect }}({% if a.value is not none %}{{ a.value | tojson }}{% endif %});
+{% endfor %}
+  });
+});

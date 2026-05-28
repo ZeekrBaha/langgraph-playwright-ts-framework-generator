@@ -1,0 +1,21 @@
+# {{ project_name }}
+
+Generated Playwright/TypeScript end-to-end suite for **{{ target_app.name }}**.
+
+## Run
+
+```bash
+npm install
+npx playwright install --with-deps
+npm test
+```
+
+## Pages
+{% for p in pages %}
+- `pages/{{ p.name }}.ts` — `{{ p.url }}`
+{% endfor %}
+
+## Flows
+{% for f in flows %}
+- `specs/{{ f.name | lower }}.spec.ts`  (tags: {{ f.tags | join(', ') or 'none' }})
+{% endfor %}

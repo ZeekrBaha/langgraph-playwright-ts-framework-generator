@@ -1,0 +1,26 @@
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './specs',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 4 : undefined,
+  reporter: process.env.CI ? [['github'], ['html']] : 'list',
+  use: {
+    baseURL: process.env.BASE_URL ?? '{{ target_app.base_url }}',
+    trace: 'on-first-retry',
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+{% for b in browsers %}
+{% if b == 'chromium' %}    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+{% elif b == 'firefox' %}    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+{% elif b == 'webkit' %}    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+{% elif b == 'mobile-chrome' %}    { name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
+{% elif b == 'mobile-safari' %}    { name: 'mobile-safari', use: { ...devices['iPhone 13'] } },
+{% endif %}
+{% endfor %}
+  ],
+});
