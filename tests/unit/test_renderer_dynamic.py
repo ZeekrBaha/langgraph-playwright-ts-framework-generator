@@ -59,3 +59,46 @@ def test_spec_wraps_steps_in_test_step():
     assert "await test.step('open home'" in out
     assert "await homePage.goto();" in out
     assert "await expect(homePage.title).toBeVisible();" in out
+
+
+def test_role_locator_without_name_renders_correctly():
+    """Regression test: bare role locator (no name) must not crash."""
+    out = render_page_object(
+        class_name="X",
+        url="/x",
+        elements=[{"name": "main", "locator": {"strategy": "role", "role": "main"}}],
+        actions=[],
+    )
+    assert "getByRole('main')" in out
+    assert "{ name:" not in out  # no empty name block
+
+
+def test_fill_with_interpolation_uses_backticks():
+    """Regression test: fill with {var} must produce a template literal."""
+    out = render_page_object(
+        class_name="Y",
+        url="/",
+        elements=[{"name": "input", "locator": {"strategy": "testid", "value": "i"}}],
+        actions=[{
+            "name": "type",
+            "params": [{"name": "txt", "type": "string"}],
+            "steps": [{"do": "fill", "target": "input", "value": "{txt}"}],
+        }],
+    )
+    assert "await this.input.fill(`${txt}`);" in out
+    assert "String(" not in out  # no leftover String() wrapper
+
+
+def test_fill_with_literal_string_no_interpolation():
+    """Regression test: fill with plain string uses JSON-quoted literal."""
+    out = render_page_object(
+        class_name="Z",
+        url="/",
+        elements=[{"name": "input", "locator": {"strategy": "testid", "value": "i"}}],
+        actions=[{
+            "name": "type",
+            "params": [],
+            "steps": [{"do": "fill", "target": "input", "value": "hello"}],
+        }],
+    )
+    assert 'await this.input.fill("hello");' in out

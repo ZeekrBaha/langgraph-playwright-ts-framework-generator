@@ -7,7 +7,7 @@ export class {{ class_name }} {
 {% if el.locator.strategy == 'testid' %}
   readonly {{ el.name }}: Locator = this.page.getByTestId('{{ el.locator.value }}');
 {% elif el.locator.strategy == 'role' %}
-{% if el.locator.name %}
+{% if el.locator.name is defined and el.locator.name %}
   readonly {{ el.name }}: Locator = this.page.getByRole('{{ el.locator.role }}', { name: '{{ el.locator.name }}' });
 {% else %}
   readonly {{ el.name }}: Locator = this.page.getByRole('{{ el.locator.role }}');
@@ -35,7 +35,11 @@ export class {{ class_name }} {
 {% if step.do == 'click' %}
     await this.{{ step.target }}.click();
 {% elif step.do == 'fill' %}
-    await this.{{ step.target }}.fill(String({{ step.value | replace('{', '${') if '{' in step.value else step.value | tojson }}));
+{% if step.value and '{' in step.value %}
+    await this.{{ step.target }}.fill(`{{ step.value | replace('{', '${') }}`);
+{% else %}
+    await this.{{ step.target }}.fill({{ step.value | tojson }});
+{% endif %}
 {% elif step.do == 'check' %}
     await this.{{ step.target }}.check();
 {% elif step.do == 'uncheck' %}
