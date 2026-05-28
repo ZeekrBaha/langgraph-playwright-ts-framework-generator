@@ -1,0 +1,96 @@
+project_name: budgetzero-e2e
+package_name: budgetzero
+output_dir: ./budgetzero-output
+target_app:
+  name: BudgetZero
+  base_url: http://localhost:5173
+  start_command: npm run dev
+  start_cwd: ../budgetzero-web
+  health_path: /
+browsers:
+  - chromium
+  - firefox
+  - webkit
+  - mobile-chrome
+pages:
+  - name: BudgetPage
+    url: /
+    elements:
+      - name: categoryRowGroceries
+        locator: { strategy: testid, value: category-row-groceries }
+      - name: heading
+        locator: { strategy: role, role: heading, name: "Budget" }
+    actions: []
+
+  - name: TransactionsPage
+    url: /transactions
+    elements:
+      - name: transactionRow
+        locator: { strategy: testid, value: transaction-row-tx1 }
+      - name: addButton
+        locator: { strategy: role, role: button, name: "Add" }
+    actions: []
+
+  - name: ReportsPage
+    url: /reports
+    elements:
+      - name: reportIncome
+        locator: { strategy: testid, value: report-income }
+      - name: reportSpent
+        locator: { strategy: testid, value: report-spent }
+      - name: reportNet
+        locator: { strategy: testid, value: report-net }
+    actions: []
+
+  - name: PlanPage
+    url: /plan
+    elements:
+      - name: planRow
+        locator: { strategy: testid, value: plan-row-groceries }
+      - name: planTarget
+        locator: { strategy: testid, value: plan-target-groceries }
+    actions: []
+
+  - name: GuidePage
+    url: /guide
+    elements:
+      - name: guideStep1
+        locator: { strategy: testid, value: guide-step-1 }
+    actions: []
+
+  - name: AccountsPage
+    url: /accounts
+    elements:
+      - name: heading
+        locator: { strategy: role, role: heading, name: "Accounts" }
+    actions: []
+
+  - name: DesignSystemPage
+    url: /design-system
+    elements:
+      - name: heading
+        locator: { strategy: role, role: heading, name: "Design System" }
+    actions: []
+
+flows:
+  - name: BudgetSmoke
+    tags: [smoke, budget]
+    steps:
+      - { page: BudgetPage, action: goto }
+    assertions:
+      - { "on": BudgetPage.heading, expect: toBeVisible }
+
+  - name: ReportsSmoke
+    tags: [smoke, reports]
+    steps:
+      - { page: ReportsPage, action: goto }
+    assertions:
+      - { "on": ReportsPage.reportIncome, expect: toBeVisible }
+      - { "on": ReportsPage.reportNet, expect: toBeVisible }
+
+  - name: TransactionsSmoke
+    tags: [smoke, transactions]
+    steps:
+      - { page: TransactionsPage, action: goto }
+    assertions:
+      - { "on": TransactionsPage.addButton, expect: toBeVisible }
