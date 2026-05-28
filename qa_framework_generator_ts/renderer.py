@@ -21,6 +21,45 @@ def _env() -> Environment:
     )
 
 
+def render_page_object(
+    class_name: str,
+    url: str,
+    elements: list[dict],
+    actions: list[dict],
+) -> str:
+    env = _env()
+    return env.get_template("page-object.ts.j2").render(
+        class_name=class_name,
+        url=url,
+        elements=elements,
+        actions=actions,
+    )
+
+
+def render_fixtures(pages: list[dict]) -> str:
+    env = _env()
+    return env.get_template("fixtures.ts.j2").render(pages=pages)
+
+
+def render_spec(
+    describe: str,
+    test_name: str,
+    tags: list[str],
+    used_fixtures: list[str],
+    steps: list[dict],
+    assertions: list[dict],
+) -> str:
+    env = _env()
+    return env.get_template("spec.ts.j2").render(
+        describe=describe,
+        test_name=test_name,
+        tags=tags,
+        used_fixtures=used_fixtures,
+        steps=steps,
+        assertions=assertions,
+    )
+
+
 def render_static_templates(cfg: FrameworkConfig) -> list[GeneratedFile]:
     env = _env()
     ctx = cfg.model_dump()

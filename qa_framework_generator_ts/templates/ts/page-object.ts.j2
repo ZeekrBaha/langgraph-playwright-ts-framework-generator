@@ -1,0 +1,54 @@
+import { Page, Locator } from '@playwright/test';
+
+export class {{ class_name }} {
+  constructor(private readonly page: Page) {}
+
+{% for el in elements %}
+{% if el.locator.strategy == 'testid' %}
+  readonly {{ el.name }}: Locator = this.page.getByTestId('{{ el.locator.value }}');
+{% elif el.locator.strategy == 'role' %}
+{% if el.locator.name %}
+  readonly {{ el.name }}: Locator = this.page.getByRole('{{ el.locator.role }}', { name: '{{ el.locator.name }}' });
+{% else %}
+  readonly {{ el.name }}: Locator = this.page.getByRole('{{ el.locator.role }}');
+{% endif %}
+{% elif el.locator.strategy == 'label' %}
+  readonly {{ el.name }}: Locator = this.page.getByLabel('{{ el.locator.value }}');
+{% elif el.locator.strategy == 'text' %}
+  readonly {{ el.name }}: Locator = this.page.getByText('{{ el.locator.value }}');
+{% elif el.locator.strategy == 'placeholder' %}
+  readonly {{ el.name }}: Locator = this.page.getByPlaceholder('{{ el.locator.value }}');
+{% elif el.locator.strategy == 'altText' %}
+  readonly {{ el.name }}: Locator = this.page.getByAltText('{{ el.locator.value }}');
+{% elif el.locator.strategy == 'title' %}
+  readonly {{ el.name }}: Locator = this.page.getByTitle('{{ el.locator.value }}');
+{% endif %}
+{% endfor %}
+
+  async goto(): Promise<void> {
+    await this.page.goto('{{ url }}');
+  }
+
+{% for action in actions %}
+  async {{ action.name }}({% for p in action.params %}{{ p.name }}: {{ p.type }}{% if not loop.last %}, {% endif %}{% endfor %}): Promise<void> {
+{% for step in action.steps %}
+{% if step.do == 'click' %}
+    await this.{{ step.target }}.click();
+{% elif step.do == 'fill' %}
+    await this.{{ step.target }}.fill(String({{ step.value | replace('{', '${') if '{' in step.value else step.value | tojson }}));
+{% elif step.do == 'check' %}
+    await this.{{ step.target }}.check();
+{% elif step.do == 'uncheck' %}
+    await this.{{ step.target }}.uncheck();
+{% elif step.do == 'hover' %}
+    await this.{{ step.target }}.hover();
+{% elif step.do == 'press' %}
+    await this.{{ step.target }}.press({{ step.value | tojson }});
+{% elif step.do == 'select' %}
+    await this.{{ step.target }}.selectOption({{ step.value | tojson }});
+{% endif %}
+{% endfor %}
+  }
+
+{% endfor %}
+}
