@@ -1,0 +1,39 @@
+project_name: demo-e2e
+package_name: demo
+output_dir: ./out
+target_app:
+  name: Demo
+  base_url: http://localhost:5173
+  start_command: npm run dev
+  start_cwd: ../demo-web
+  health_path: /
+browsers:
+  - chromium
+pages:
+  - name: HomePage
+    url: /
+    elements:
+      - name: title
+        locator: { strategy: role, role: heading, name: "Welcome" }
+    actions:
+      - name: openMenu
+        params: []
+        steps:
+          - { do: click, target: title }
+  - name: HomePage
+    url: /
+    elements:
+      - name: title
+        locator: { strategy: role, role: heading, name: "Welcome" }
+    actions:
+      - name: openMenu
+        params: []
+        steps:
+          - { do: click, target: title }
+flows:
+  - name: HomeFlow
+    tags: [smoke]
+    steps:
+      - { page: HomePage, action: goto }
+    assertions:
+      - { "on": HomePage.title, expect: toBeVisible }
