@@ -35,3 +35,4 @@ packages = ["qa_framework_generator_ts"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = ["slow: real-subprocess integration tests"]
