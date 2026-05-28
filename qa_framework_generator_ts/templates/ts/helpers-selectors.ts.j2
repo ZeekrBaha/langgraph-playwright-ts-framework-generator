@@ -1,0 +1,9 @@
+// Typed selector tokens — re-exported from page objects for spec-level reuse.
+export const TESTID = {
+{% for p in pages %}
+{% for el in p.elements %}
+{% if el.locator.strategy == 'testid' %}  {{ p.name }}_{{ el.name }}: '{{ el.locator.value }}',
+{% endif %}
+{% endfor %}
+{% endfor %}
+} as const;
